@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular POC Sprint — Challenge Hub</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --easy: #3fb950;
+      --medium: #d29922;
+      --hard: #f85149;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Header */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-left h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .header-left p {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 2px;
+    }
+    .sprint-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Stats row */
+    .stats {
+      display: flex;
+      gap: 16px;
+      padding: 20px 32px;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      min-width: 140px;
+      flex: 1;
+    }
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Main layout */
+    .main { padding: 0 32px 40px; }
+
+    /* Section */
+    .section { margin-bottom: 32px; }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Developers grid */
+    .dev-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .dev-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      transition: border-color 0.15s;
+    }
+    .dev-card:hover { border-color: var(--accent); }
+    .dev-card .dev-name {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+    }
+    .dev-card .dev-page {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .dev-card .dev-page.claimed { color: var(--accent); }
+    .dev-card .dev-repo {
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+    .badge-easy { background: rgba(63,185,80,0.15); color: var(--easy); border: 1px solid rgba(63,185,80,0.3); }
+    .badge-medium { background: rgba(210,153,34,0.15); color: var(--medium); border: 1px solid rgba(210,153,34,0.3); }
+    .badge-hard { background: rgba(248,81,73,0.15); color: var(--hard); border: 1px solid rgba(248,81,73,0.3); }
+    .badge-unclaimed { background: rgba(139,148,158,0.1); color: var(--text-muted); border: 1px solid var(--border); }
+
+    /* Page pool */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(88,166,255,0.08);
+    }
+    .page-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .page-table th {
+      background: var(--surface2);
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .page-table tr:last-child td { border-bottom: none; }
+    .page-table tr.hidden { display: none; }
+    .status-available { color: var(--green); }
+    .status-claimed { color: var(--accent); }
+
+    /* Timeline */
+    .timeline {
+      display: flex;
+      gap: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .timeline-item {
+      flex: 1;
+      padding: 16px 14px;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+    .timeline-item:last-child { border-right: none; }
+    .timeline-item.current {
+      background: rgba(88,166,255,0.08);
+      border-top: 2px solid var(--accent);
+    }
+    .timeline-item.past { opacity: 0.5; }
+    .timeline-day {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .timeline-label {
+      font-size: 13px;
+      color: var(--text);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+    .timeline-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 16px 32px;
+      color: var(--text-muted);
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .header, .stats, .main, .footer { padding-left: 16px; padding-right: 16px; }
+      .timeline { flex-direction: column; }
+      .timeline-item { border-right: none; border-bottom: 1px solid var(--border); }
+      .timeline-item:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+<script>
+  // ─────────────────────────────────────────────
+  // UPDATE THIS SECTION AS THE SPRINT PROGRESSES
+  // ─────────────────────────────────────────────
+
+  const CURRENT_SPRINT_DAY = 0; // Set to 1 on kickoff morning, up to 7
+
+  const CLAIMS = [
+    // Add entries here as devs claim pages:
+    // { devName: 'Venkat', pageIndex: 0 },    // 0 = Login Page
+    // { devName: 'Pooja', pageIndex: 2 },     // 2 = Payment Details
+  ];
+
+  // ─────────────────────────────────────────────
+  // DO NOT EDIT BELOW THIS LINE
+  // ─────────────────────────────────────────────
+
+  const PAGES = [
+    { name: 'Login Page',               difficulty: 'Easy',   readme: 'pages/README-login.md' },
+    { name: 'Password Change',          difficulty: 'Easy',   readme: 'pages/README-password-change.md' },
+    { name: 'Payment Details',          difficulty: 'Medium', readme: 'pages/README-payment-details.md' },
+    { name: 'Location Search',          difficulty: 'Medium', readme: 'pages/README-location-search.md' },
+    { name: 'Benefit Amount',           difficulty: 'Medium', readme: 'pages/README-benefit-amount.md' },
+    { name: 'Events Browser',           difficulty: 'Medium', readme: 'pages/README-events-browser.md' },
+    { name: 'Policy Maintenance',       difficulty: 'Hard',   readme: 'pages/README-policy-maintenance.md' },
+    { name: 'Recurring Payment Wizard', difficulty: 'Hard',   readme: 'pages/README-recurring-payment-wizard.md' },
+  ];
+
+  const DEVS = [
+    { name: 'Venkat',   repo: 'poc-angular-venkat' },
+    { name: 'Alekhya',  repo: 'poc-angular-alekhya' },
+    { name: 'Pooja',    repo: 'poc-angular-pooja' },
+    { name: 'Nagendra', repo: 'poc-angular-nagendra' },
+    { name: 'Naveen',   repo: 'poc-angular-naveen' },
+    { name: 'Deepak',   repo: 'poc-angular-deepak' },
+    { name: 'Arunish',  repo: 'poc-angular-arunish' },
+    { name: 'Vamshi',   repo: 'poc-angular-vamshi' },
+  ];
+
+  const TIMELINE = [
+    { day: 'Day 1', label: 'Kickoff',      desc: 'Pages claimed' },
+    { day: 'Day 2', label: 'Build',        desc: 'Sprint open' },
+    { day: 'Day 3', label: 'Build',        desc: 'Sprint open' },
+    { day: 'Day 4', label: 'Build',        desc: 'Sprint open' },
+    { day: 'Day 5', label: 'Build',        desc: 'Sprint open' },
+    { day: 'Day 6', label: 'Code Freeze',  desc: 'PR to main by EOD' },
+    { day: 'Day 7', label: 'Review Day',   desc: 'Scores announced' },
+  ];
+
+  const BASE_GITHUB = 'https://github.com/rohitbajrolia';
+
+  function getClaimMap() {
+    const map = {};
+    CLAIMS.forEach(c => { map[c.devName] = c.pageIndex; });
+    return map;
+  }
+
+  function diffBadge(diff) {
+    const cls = diff.toLowerCase();
+    return `<span class="badge badge-${cls}">${diff}</span>`;
+  }
+
+  function render() {
+    const claimMap = getClaimMap();
+    const claimedPageIndices = new Set(CLAIMS.map(c => c.pageIndex));
+    const claimedCount = CLAIMS.length;
+    const availableCount = PAGES.length - claimedCount;
+
+    // Stats
+    document.getElementById('stat-devs').textContent = DEVS.length;
+    document.getElementById('stat-claimed').textContent = claimedCount;
+    document.getElementById('stat-available').textContent = availableCount;
+    document.getElementById('stat-day').textContent = CURRENT_SPRINT_DAY === 0 ? 'Pre' : CURRENT_SPRINT_DAY;
+
+    // Sprint badge
+    if (CURRENT_SPRINT_DAY === 0) {
+      document.getElementById('sprint-badge').textContent = 'Pre-Sprint';
+    } else if (CURRENT_SPRINT_DAY === 7) {
+      document.getElementById('sprint-badge').textContent = 'Review Day';
+    } else {
+      document.getElementById('sprint-badge').textContent = `Day ${CURRENT_SPRINT_DAY} of 7`;
+    }
+
+    // Developers grid
+    const grid = document.getElementById('dev-grid');
+    grid.innerHTML = DEVS.map(dev => {
+      const pi = claimMap[dev.name];
+      const hasClaim = pi !== undefined;
+      const page = hasClaim ? PAGES[pi] : null;
+      return `
+        <div class="dev-card">
+          <div class="dev-name">${dev.name}</div>
+          <div class="dev-page ${hasClaim ? 'claimed' : ''}">
+            ${hasClaim ? `📄 ${page.name}` : 'No page claimed yet'}
+          </div>
+          ${hasClaim ? diffBadge(page.difficulty) : '<span class="badge badge-unclaimed">Unclaimed</span>'}
+          <div class="dev-repo" style="margin-top:10px">
+            <a href="${BASE_GITHUB}/${dev.repo}" target="_blank">↗ ${dev.repo}</a>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Page pool table
+    renderPageTable('all');
+
+    // Timeline
+    const tl = document.getElementById('timeline');
+    tl.innerHTML = TIMELINE.map((item, i) => {
+      const dayNum = i + 1;
+      let cls = '';
+      if (CURRENT_SPRINT_DAY > 0 && dayNum < CURRENT_SPRINT_DAY) cls = 'past';
+      if (CURRENT_SPRINT_DAY > 0 && dayNum === CURRENT_SPRINT_DAY) cls = 'current';
+      return `
+        <div class="timeline-item ${cls}">
+          <div class="timeline-day">${item.day}</div>
+          <div class="timeline-label">${item.label}</div>
+          <div class="timeline-desc">${item.desc}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderPageTable(filter) {
+    const claimedPageIndices = new Set(CLAIMS.map(c => c.pageIndex));
+    const claimByPage = {};
+    CLAIMS.forEach(c => { claimByPage[c.pageIndex] = c.devName; });
+
+    const tbody = document.getElementById('page-tbody');
+    tbody.innerHTML = PAGES.map((page, i) => {
+      const isClaimed = claimedPageIndices.has(i);
+      const claimedBy = claimByPage[i];
+      const diff = page.difficulty.toLowerCase();
+      const show = filter === 'all' ||
+                   (filter === 'available' && !isClaimed) ||
+                   (filter === 'claimed' && isClaimed) ||
+                   filter === diff;
+      return `
+        <tr class="${show ? '' : 'hidden'}" data-diff="${diff}" data-status="${isClaimed ? 'claimed' : 'available'}">
+          <td>${i}</td>
+          <td>${page.name}</td>
+          <td>${diffBadge(page.difficulty)}</td>
+          <td class="${isClaimed ? 'status-claimed' : 'status-available'}">
+            ${isClaimed ? `Claimed — ${claimedBy}` : '✅ Available'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Update filter button active state
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+  }
+
+  window.setFilter = function(filter, btn) {
+    renderPageTable(filter);
+  };
+</script>
+
+<div class="header">
+  <div class="header-left">
+    <h1>⚡ Angular POC Sprint — Challenge Hub</h1>
+    <p>Enterprise UI rewrite challenge · Angular 21 · Capgemini</p>
+  </div>
+  <div id="sprint-badge" class="sprint-badge">Loading…</div>
+</div>
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-value" id="stat-devs">8</div>
+    <div class="stat-label">Developers</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-claimed" style="color:var(--accent)">0</div>
+    <div class="stat-label">Pages Claimed</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-available" style="color:var(--green)">8</div>
+    <div class="stat-label">Pages Available</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" id="stat-day" style="color:var(--purple)">—</div>
+    <div class="stat-label">Sprint Day</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="section">
+    <div class="section-title">Sprint Timeline</div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Developers</div>
+    <div class="dev-grid" id="dev-grid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Page Pool</div>
+    <div class="filter-row">
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" data-filter="available" onclick="setFilter('available', this)">Available</button>
+      <button class="filter-btn" data-filter="claimed" onclick="setFilter('claimed', this)">Claimed</button>
+      <button class="filter-btn" data-filter="easy" onclick="setFilter('easy', this)">Easy</button>
+      <button class="filter-btn" data-filter="medium" onclick="setFilter('medium', this)">Medium</button>
+      <button class="filter-btn" data-filter="hard" onclick="setFilter('hard', this)">Hard</button>
+    </div>
+    <table class="page-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Page</th>
+          <th>Difficulty</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="page-tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="footer">
+  <span>Angular POC Sprint · Capgemini · <a href="https://github.com/rohitbajrolia/poc-angular-challenge-hub" target="_blank">rohitbajrolia/poc-angular-challenge-hub</a></span>
+  <span>Angular 21 · Node 20 LTS · NgModules · Reactive Forms</span>
+</div>
+
+<script>render();</script>
+</body>
+</html>

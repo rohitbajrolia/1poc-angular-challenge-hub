@@ -1,0 +1,58 @@
+{
+  "folders": [
+    {
+      "name": "1poc-angular-challenge-hub (HUB)",
+      "path": "."
+    },
+    {
+      "name": "poc-angular-venkat",
+      "path": "../poc-angular-venkat"
+    },
+    {
+      "name": "poc-angular-alekhya",
+      "path": "../poc-angular-alekhya"
+    },
+    {
+      "name": "poc-angular-pooja",
+      "path": "../poc-angular-pooja"
+    },
+    {
+      "name": "poc-angular-nagendra",
+      "path": "../poc-angular-nagendra"
+    },
+    {
+      "name": "poc-angular-naveen",
+      "path": "../poc-angular-naveen"
+    },
+    {
+      "name": "poc-angular-deepak",
+      "path": "../poc-angular-deepak"
+    },
+    {
+      "name": "poc-angular-arunish",
+      "path": "../poc-angular-arunish"
+    },
+    {
+      "name": "poc-angular-vamshi",
+      "path": "../poc-angular-vamshi"
+    }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.git": false
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "angular.ng-template",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "ms-vscode.vscode-typescript-next"
+    ]
+  }
+}
