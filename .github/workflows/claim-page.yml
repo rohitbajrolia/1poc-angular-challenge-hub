@@ -1,0 +1,194 @@
+name: Claim Page
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    # only run for issues submitted via the dashboard claim flow
+    if: contains(github.event.issue.body, 'DEVELOPER:') && contains(github.event.issue.body, 'PAGE_INDEX:')
+
+    permissions:
+      issues: write
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Parse and validate
+        id: claim
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, re, json, sys
+
+          body = os.environ['ISSUE_BODY']
+          out = open(os.environ['GITHUB_OUTPUT'], 'a')
+
+          dev_m   = re.search(r'DEVELOPER:\s*(.+)',   body)
+          index_m = re.search(r'PAGE_INDEX:\s*(\d+)', body)
+          name_m  = re.search(r'PAGE_NAME:\s*(.+)',   body)
+
+          if not dev_m or not index_m or not name_m:
+              out.write("valid=false\nerror=Could not read the claim. Use the Claim button on the dashboard, not a blank issue.\n")
+              sys.exit(0)
+
+          developer  = dev_m.group(1).strip()
+          page_name  = name_m.group(1).strip()
+
+          try:
+              page_index = int(index_m.group(1).strip())
+          except Exception:
+              out.write("valid=false\nerror=Invalid page index. Use the Claim button on the dashboard.\n")
+              sys.exit(0)
+
+          readme_map = {
+              0: 'README-login.md',
+              1: 'README-password-change.md',
+              2: 'README-payment-details.md',
+              3: 'README-location-search.md',
+              4: 'README-benefit-amount.md',
+              5: 'README-events-browser.md',
+              6: 'README-policy-maintenance.md',
+              7: 'README-recurring-payment-wizard.md',
+          }
+
+          if page_index not in readme_map:
+              out.write("valid=false\nerror=Invalid page number. Use the dropdown in the form.\n")
+              sys.exit(0)
+
+          with open('CLAIMS.json') as f:
+              data = json.load(f)
+          claims = data.get('claims', [])
+
+          for c in claims:
+              if c['pageIndex'] == page_index:
+                  out.write(f"valid=false\nerror=**{page_name}** is already taken by **{c['devName']}**. Pick a different page.\n")
+                  sys.exit(0)
+
+          for c in claims:
+              if c['devName'].lower() == developer.lower():
+                  taken_name = readme_map.get(c['pageIndex'], '').replace('README-','').replace('.md','').replace('-',' ').title()
+                  out.write(f"valid=false\nerror=You already claimed **{taken_name}**. One page per developer.\n")
+                  sys.exit(0)
+
+          out.write(f"valid=true\n")
+          out.write(f"developer={developer}\n")
+          out.write(f"dev_lower={developer.lower()}\n")
+          out.write(f"page_index={page_index}\n")
+          out.write(f"page_name={page_name}\n")
+          out.write(f"readme_file={readme_map[page_index]}\n")
+          PYEOF
+
+      - name: Reject invalid claim
+        if: steps.claim.outputs.valid == 'false'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `❌ **Claim rejected**\n\n${{ steps.claim.outputs.error }}\n\nClose this issue and open a new one using the **Claim a Page** form.`
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed',
+              state_reason: 'not_planned'
+            });
+
+      - name: Push README to dev repo
+        if: steps.claim.outputs.valid == 'true'
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          DEV: ${{ steps.claim.outputs.dev_lower }}
+          README: ${{ steps.claim.outputs.readme_file }}
+          PAGE: ${{ steps.claim.outputs.page_name }}
+        run: |
+          git clone "https://x-access-token:${GH_PAT}@github.com/rohitbajrolia/poc-angular-${DEV}.git" /tmp/dev-repo
+          cd /tmp/dev-repo
+
+          git config user.email "sprint-bot@rohitbajrolia"
+          git config user.name "Sprint Bot"
+
+          # use existing dev branch or create it
+          git checkout "dev/${DEV}" 2>/dev/null || git checkout -b "dev/${DEV}"
+
+          cp "$GITHUB_WORKSPACE/pages/${README}" README.md
+
+          git add README.md
+          git commit -m "claim: ${PAGE}"
+          git push origin "dev/${DEV}"
+
+      - name: Update CLAIMS.json and dashboard
+        if: steps.claim.outputs.valid == 'true'
+        env:
+          DEVELOPER: ${{ steps.claim.outputs.developer }}
+          PAGE_INDEX: ${{ steps.claim.outputs.page_index }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, re, os
+
+          developer  = os.environ['DEVELOPER']
+          page_index = int(os.environ['PAGE_INDEX'])
+
+          with open('CLAIMS.json') as f:
+              data = json.load(f)
+
+          data['claims'].append({'devName': developer, 'pageIndex': page_index})
+
+          with open('CLAIMS.json', 'w') as f:
+              json.dump(data, f, indent=2)
+
+          # update the JS array in the dashboard
+          with open('docs/index.html') as f:
+              html = f.read()
+
+          html = re.sub(
+              r'const CLAIMS = \[.*?\];',
+              f'const CLAIMS = {json.dumps(data["claims"])};',
+              html,
+              flags=re.DOTALL
+          )
+
+          with open('docs/index.html', 'w') as f:
+              f.write(html)
+          PYEOF
+
+      - name: Commit and push hub changes
+        if: steps.claim.outputs.valid == 'true'
+        run: |
+          git config user.email "sprint-bot@rohitbajrolia"
+          git config user.name "Sprint Bot"
+          git add CLAIMS.json docs/index.html
+          git commit -m "claim: ${{ steps.claim.outputs.developer }} → ${{ steps.claim.outputs.page_name }}"
+          git push
+
+      - name: Confirm claim
+        if: steps.claim.outputs.valid == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `✅ **Done.**\n\n**${{ steps.claim.outputs.developer }}** has claimed **${{ steps.claim.outputs.page_name }}**.\n\nYour \`README.md\` is now on branch \`dev/${{ steps.claim.outputs.dev_lower }}\` in your repo. Pull it down and start building.\n\nThe dashboard will update in ~1 minute.`
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed',
+              state_reason: 'completed'
+            });

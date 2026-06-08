@@ -1,0 +1,45 @@
+name: Claim a Page
+description: Pick the page you want to build. One per developer, first come first served.
+title: "claim: your name here"
+body:
+  - type: dropdown
+    id: developer
+    attributes:
+      label: Your Name
+      options:
+        - Venkat
+        - Alekhya
+        - Pooja
+        - Nagendra
+        - Naveen
+        - Deepak
+        - Arunish
+        - Vamshi
+    validations:
+      required: true
+
+  - type: dropdown
+    id: page
+    attributes:
+      label: Page to Build
+      description: Check the dashboard to see what is still available before picking.
+      options:
+        - "0 - Login Page (Easy)"
+        - "1 - Password Change (Easy)"
+        - "2 - Payment Details (Medium)"
+        - "3 - Location Search (Medium)"
+        - "4 - Benefit Amount (Medium)"
+        - "5 - Events Browser (Medium)"
+        - "6 - Policy Maintenance (Hard)"
+        - "7 - Recurring Payment Wizard (Hard)"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirm
+      options:
+        - label: I understand one page per developer and this cannot be changed after claiming.
+    validations:
+      required: true
