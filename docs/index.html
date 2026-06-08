@@ -445,7 +445,8 @@
     { day: 'Day 7', label: 'Review',      desc: 'Scores announced'   },
   ];
 
-  const BASE = 'https://github.com/rohitbajrolia';
+  const BASE      = 'https://github.com/rohitbajrolia';
+  const HUB_REPO  = '1poc-angular-challenge-hub';
 
   // ─── claim modal state ────────────────────────────────────────────────────
 
@@ -498,7 +499,7 @@
     const body  = encodeURIComponent(
       `DEVELOPER: ${_pendingDev}\nPAGE_INDEX: ${_pendingIndex}\nPAGE_NAME: ${_pendingName}`
     );
-    const url = `${BASE}/poc-angular-challenge-hub/issues/new?title=${title}&body=${body}`;
+    const url = `${BASE}/${HUB_REPO}/issues/new?title=${title}&body=${body}`;
     closeModal();
     window.open(url, '_blank');
   }
@@ -772,7 +773,7 @@
 
 <!-- ── Footer ────────────────────────────────────────────────────────────── -->
 <div class="footer">
-  <span>Angular POC Sprint · Capgemini · <a href="https://github.com/rohitbajrolia/poc-angular-challenge-hub" target="_blank">rohitbajrolia/poc-angular-challenge-hub</a></span>
+  <span>Angular POC Sprint · Capgemini · <a href="https://github.com/rohitbajrolia/1poc-angular-challenge-hub" target="_blank">rohitbajrolia/1poc-angular-challenge-hub</a></span>
   <span>Angular 21 · Node 20 LTS · NgModules · Reactive Forms</span>
 </div>
 
